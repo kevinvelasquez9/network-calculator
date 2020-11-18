@@ -21,8 +21,57 @@ class CalcImpl : public Calc {
             vector<string> tokens = tokenize(expr);
             switch(tokens.size()) {
                 case 1:
+                    if (tokens[0].empty()) {
+                        return 0;
+                    }
+                    char var = tokens[0].at(0);
+                    if ( (var >= 65 && var <= 90) || 
+                        (var >= 97 && var <= 122)) {
+                        if (variables.find(var) == variables.end()) {
+                            printf("This variable does not have an associated value\n");
+                        } else {
+                            return variables[var];
+                        }
+                    }
+                    char *endptr;
+                    int intVar = strtol(tokens[0], &endptr, 10);
+                    //Beginning pointer and endpointer will be the same if conversion failed
+                    if (endptr == tokens[0]) {
+                        return 0;
+                    } else {
+                        printf("%d\n", intVar);
+                    }
                     break;
                 case 3:
+                    int second;
+                    if (tokens[1].size() > 1) {
+                        return 0;
+                    }
+                    second = sign_check(tokens[1].at(0));
+                    if (second == 0) {
+                        return 0;
+                    }
+                    int first;
+                    if (tokens[0].size() > 1) {
+                        char *endptr;
+                        first = strtol(tokens[0], &endptr, 10);
+                        if (endptr == tokens[0]) {
+                            return 0;
+                        }
+                    } else {
+                        char l = tokens[0].at(0);
+                        if (valid_letter(l)) {
+                            first = l;
+                        } else {
+                            return 0;
+                        }   
+                    }
+
+
+                    if (second == '/' && third == 0) {
+                        printf("Error\n");
+                        return 0;
+                    }
                     break;
                 case 5:
                     break;
@@ -40,6 +89,24 @@ class CalcImpl : public Calc {
                 vec.push_back(tok);
             }
             return vec;
+        }
+
+        bool valid_letter(string s) {
+            if ( (var >= 65 && var <= 90) || 
+                    (var >= 97 && var <= 122)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        int sign_check(char check) {
+            if (check == '=' || check == '+' ||
+                check == '-' || check == '/' ||
+                check == '*') {
+                return check;
+            } else {
+                return 0;
         }
 }
 

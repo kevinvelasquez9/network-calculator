@@ -19,22 +19,20 @@ class CalcImpl : public Calc {
         unordered_map<string, int> variables;
         
         int evalExpr(const char *expr, int *result) {
-            cout << result << endl;
             vector<string> tokens = tokenize(expr);
+            bool err = false;
             switch(tokens.size()) {
                 case 1:
-                    evalOne(tokens[0], result);
+                    err = evalOne(tokens[0], result);
                     break;
                 case 3:
-                    evalThree(tokens, result);
+                    err = evalThree(tokens, result);
                     break;
                 case 5:
+                    err = evalFive(tokens, result);
                     break;
-                default:
-                    return 0;
             }
-            
-            if (result == NULL) {
+            if (!err) {
                 cout << "Error" << endl;
                 return 0;
             }
@@ -53,7 +51,7 @@ class CalcImpl : public Calc {
             // A number
             else {
                 char *endptr;
-                int num = strtol(token, &endptr, 10);
+                int num = (int) strtol(token.c_str(), &endptr, 10);
                 if (*endptr == '\0') {
                     *p = num;
                     return true;
@@ -76,6 +74,9 @@ class CalcImpl : public Calc {
                 } else if (op == "*") {
                     *result = num1 * num2;
                 } else if (op == "/") {
+                    if (num2 == 0) {
+                        return false;
+                    } 
                     *result = num1 / num2;
                 }
                 return true;
@@ -94,9 +95,8 @@ class CalcImpl : public Calc {
             if (tokens[1] == "=") {
                 // Make sure first token is alphabetical
                 if (is_alpha(tokens[0])) {
-                    char *endptr;
-                    int num = strtol(tokens[2], &endptr, 10);
-                    if (*endptr == '\0') {
+                    int num;
+                    if (is_num(tokens[2], &num)) {
                         variables[tokens[0]] = num;
                         *result = num;
                         return true;
@@ -105,6 +105,17 @@ class CalcImpl : public Calc {
             }
             // Else, assume it is an operation
             return compute(tokens[0], tokens[1], tokens[2], result);
+        }
+
+        // Evaluate for five tokens
+        bool evalFive(vector<string> tokens, int *result) {
+            int ans;
+            if (tokens[1] == "=" && compute(tokens[2], tokens[3], tokens[4], &ans)) {
+                variables[tokens[0]] = ans;
+                *result = ans;
+                return true;
+            }
+            return false;
         }
 
         // Splits a string into a vector of strings
@@ -135,7 +146,7 @@ class CalcImpl : public Calc {
             }
             return false;
         }
-}
+};
 
 extern "C" struct Calc *calc_create(void) {
     return new CalcImpl();

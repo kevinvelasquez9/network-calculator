@@ -23,7 +23,7 @@ class CalcImpl : public Calc {
             vector<string> tokens = tokenize(expr);
             switch(tokens.size()) {
                 case 1:
-                    evalOne(token[0], result);
+                    evalOne(tokens[0], result);
                     break;
                 case 3:
                     evalThree(tokens, result);
@@ -33,67 +33,79 @@ class CalcImpl : public Calc {
                 default:
                     return 0;
             }
-            return (result == NULL) ? 0 : 1;
+            
+            if (result == NULL) {
+                cout << "Error" << endl;
+                return 0;
+            }
+            return 1;
+        }
+
+        // Check if token is a valid number, and update the pointer
+        bool is_num(string token, int *p) {
+            // A variable
+            if (is_alpha(token)) {
+                if (variables.find(token) != variables.end()) {
+                    *p = variables[token];
+                    return true;
+                }
+            }
+            // A number
+            else {
+                char *endptr;
+                int num = strtol(token, &endptr, 10);
+                if (*endptr == '\0') {
+                    *p = num;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Compute s1 (op) s2
+        bool compute(string s1, string op, string s2, int *result) {
+            int num1 = 0;
+            int num2 = 0;
+
+            if (is_num(s1, &num1) && is_num(s2, &num2) && is_op(op)) {
+                // Now we can compute
+                if (op == "+") {
+                    *result = num1 + num2;
+                } else if (op == "-") {
+                    *result = num1 - num2;
+                } else if (op == "*") {
+                    *result = num1 * num2;
+                } else if (op == "/") {
+                    *result = num1 / num2;
+                }
+                return true;
+            }
+            return false;
         }
 
         // Evaluate for one token
-        void evalOne(string token, int *result) {
-            // If string is alphabetical
-            if (is_alpha(token)) {
-                if (variables.find(token) == variables.end()) {
-                    cout << "This variable does not have an associated value" << endl;
-                } else {
-                    *result = variables[token];
-                }
-            }
-            // String has numbers in it
-            else {
-                char *endptr;
-                int num = strtol(tokens[0], &endptr, 10);
-                if (*endptr != '\0') {
-                    cout << "Error" << endl;
-                } else {
-                    *result = num;
-                }
-            }
+        bool evalOne(string token, int *result) {
+            return is_num(token, result);
         }
 
         // Evaluate for three tokens
-        void evalThree(vector<string> tokens, int *result) {
-            int ans = 0;
+        bool evalThree(vector<string> tokens, int *result) {
             // If it is an assignment
             if (tokens[1] == "=") {
-                // stuff
-            }
-            second = sign_check(tokens[1].at(0));
-            if (second == 0) {
-                return 0;
-            }
-            int first;
-            if (tokens[0].size() > 1) {
-                char *endptr;
-                first = strtol(tokens[0], &endptr, 10);
-                if (endptr == tokens[0]) {
-                    return 0;
+                // Make sure first token is alphabetical
+                if (is_alpha(tokens[0])) {
+                    char *endptr;
+                    int num = strtol(tokens[2], &endptr, 10);
+                    if (*endptr == '\0') {
+                        variables[tokens[0]] = num;
+                        *result = num;
+                        return true;
+                    }
                 }
-            } else {
-                char l = tokens[0].at(0);
-                if (valid_letter(l)) {
-                    first = l;
-                } else {
-                    return 0;
-                }   
             }
-
-
-            if (second == '/' && third == 0) {
-                printf("Error\n");
-                return 0;
-            }
+            // Else, assume it is an operation
+            return compute(tokens[0], tokens[1], tokens[2], result);
         }
-
-
-
 
         // Splits a string into a vector of strings
         vector<string> tokenize(const string &expr) {
@@ -116,12 +128,12 @@ class CalcImpl : public Calc {
             return true;
         }
 
-        // Checks if string is an operator, otherwise return "."
-        string is_op(string op) {
-            if (check == "+" || check == "-" || check == "/" || check == "*") {
-                return check;
+        // Checks if string is an operator
+        bool is_op(string op) {
+            if (op == "+" || op == "-" || op == "/" || op == "*") {
+                return true;
             }
-            return ".";
+            return false;
         }
 }
 

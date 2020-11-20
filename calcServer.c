@@ -18,24 +18,27 @@ int chat_with_client(struct Calc *calc, int infd, int outfd) {
 	 * and (if evaluation was successful) print the result of each
 	 * expression.  Quit when "quit" command is received.
 	 */
-    ssize_t n = rio_readlineb(&in, linebuf, LINEBUF_SIZE);
-    if (n <= 0) {
-        return 1;
-	} else if (strcmp(linebuf, "quit\n") == 0 || strcmp(linebuf, "quit\r\n") == 0) {
-        return 0;
-    } else {
-		/* process input line */
-	    int result;
-		if (calc_eval(calc, linebuf, &result) == 0) {
-		/* expression couldn't be evaluated */
-			rio_writen(outfd, "Error\n", 6);
-            return 1;
-		} else {
-		    /* output result */
-		    int len = snprintf(linebuf, LINEBUF_SIZE, "%d\n", result);
-			if (len < LINEBUF_SIZE) {
-				rio_writen(outfd, linebuf, len);
-                return 1;
+    while (1) {
+		ssize_t n = rio_readlineb(&in, linebuf, LINEBUF_SIZE);
+		if (n <= 0) {
+			/* error or end of input */
+		} else if (strcmp(linebuf, "quit\n") == 0 || strcmp(linebuf, "quit\r\n") == 0) {
+			/* quit command */
+			return 1;
+		} else if (strcmp(linebuf, "shutdown\n") == 0 || strcmp(linebuf, "shutdown\r\n") == 0){
+            return 0;
+        } else {
+			/* process input line */
+			int result;
+			if (calc_eval(calc, linebuf, &result) == 0) {
+				/* expression couldn't be evaluated */
+				rio_writen(outfd, "Error\n", 6);
+			} else {
+				/* output result */
+				int len = snprintf(linebuf, LINEBUF_SIZE, "%d\n", result);
+				if (len < LINEBUF_SIZE) {
+					rio_writen(outfd, linebuf, len);
+				}
 			}
 		}
 	}
@@ -53,19 +56,27 @@ int main(int argc, char **argv) {
         return 0;
     }
     int listen = Open_listenfd(argv[1]);
+    printf("Server created: %d\n", listen);
     if (listen < 0) {
         printf("Unable to open server\n");
         return 0;
     }
 
 
+    fd_set fdSet;
+    FD_ZERO(&fdSet);
+    FD_SET(listen, &fdSet);
     int exit = 1;
+    int loopCounter = 0;
     while (exit) {
         int clientfd = Accept(listen, NULL, NULL);
+        clientfd = Accept(listen, NULL, NULL);
+        printf("Client created");
         if (clientfd > 0) {
             exit = chat_with_client(calc, clientfd, clientfd);
             close(clientfd);
         }
+        loopCounter++;
     }
     close(listen);
     calc_destroy(calc);

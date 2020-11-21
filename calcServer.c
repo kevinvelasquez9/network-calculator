@@ -63,15 +63,13 @@ int main(int argc, char **argv) {
     }
 
 
-    fd_set fdSet;
-    FD_ZERO(&fdSet);
-    FD_SET(listen, &fdSet);
+    //fd_set fdSet;
+    //FD_ZERO(&fdSet);
+    //FD_SET(listen, &fdSet);
     int exit = 1;
     int loopCounter = 0;
     while (exit) {
         int clientfd = Accept(listen, NULL, NULL);
-        clientfd = Accept(listen, NULL, NULL);
-        printf("Client created");
         if (clientfd > 0) {
             exit = chat_with_client(calc, clientfd, clientfd);
             close(clientfd);
